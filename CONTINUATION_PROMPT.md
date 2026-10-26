@@ -1,0 +1,11 @@
+# Continuation prompt for the receiving Manus account
+
+Continue the Tickwise website from the attached `tickwise-handoff.zip`. First read `HANDOFF.md`, `TODO.md`, and `SOURCES.md`. Treat the ZIP as source code only: do not expect or attempt to access the original Manus project, original database, original Git history, admin-email value, or any unshared credentials.
+
+Initialize a fresh managed WebDev website in this Manus account and restore the included source into it. Enable the destination project’s Server and Database capabilities; configure the protected `TICKWISE_ADMIN_EMAIL` for this account’s sole admin only. Let the new project provision its own Manus OAuth/session/database environment. Apply the included migration and keep secrets out of the browser bundle and repository.
+
+The website is intended to be private to that one Manus account. Preserve the server-side page gate, OAuth nonce/state validation, `HttpOnly; Secure; SameSite=None` session cookie, exact admin-email check, no-store/noindex page responses, disabled analytics, and fail-closed behavior. The USD balance and risk percentage must stay in browser memory only and must never be sent to the server or stored. Keep Deriv use to unauthenticated public market data; do not add account tokens, trading APIs, or real order execution. SMA signals are descriptive indicators, not next-tick predictions.
+
+Current implementation checks previously passed `pnpm check` and `pnpm build`; local requests showed `/` redirecting to `/login`, `/login` returning the app shell, `/api/health` returning 200, and a valid route manifest. However, the WebDev screenshot tool showed a blank white login page, and the real Manus OAuth login has not been completed. Diagnose the rendering issue, inspect the actual Preview in this destination project, and verify that only the allowlisted account can sign in before calling the login complete.
+
+Do **not** publish, expose a public link, connect the original database, change the admin identity, or overwrite any existing destination project without asking the user first. After resolving the Preview/login issue, provide the user the Preview and security status. Wait for explicit approval in this Manus account before publication.
