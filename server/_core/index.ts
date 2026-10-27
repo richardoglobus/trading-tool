@@ -1,4 +1,3 @@
-import "dotenv/config.js";
 import express from "express";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
