@@ -311,6 +311,10 @@ export default function Home() {
   const [balanceInput, setBalanceInput] = useState("");
   const [riskPercent, setRiskPercent] = useState(1);
   const { user, logout } = useAuth();
+  const [demoStatus, setDemoStatus] = useState<"disconnected" | "connecting" | "connected" | "error">("disconnected");
+  const [demoBalance, setDemoBalance] = useState<number | null>(null);
+  const [demoCurrency, setDemoCurrency] = useState("USD");
+  const [demoError, setDemoError] = useState("");
   const processedSeq = useRef(0);
   const pendingRef = useRef<PendingTrade | null>(null);
   const latest = ticks[ticks.length - 1];
@@ -427,6 +431,19 @@ export default function Home() {
     }
   };
 
+  const connectDemo = async () => {
+    setDemoStatus("connecting"); setDemoError("");
+    try {
+      const response = await fetch("/api/deriv/demo/connect", { method: "POST", credentials: "include" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Demo connection failed");
+      const balanceResponse = await fetch("/api/deriv/demo/balance", { credentials: "include" });
+      const balanceResult = await balanceResponse.json();
+      if (!balanceResponse.ok) throw new Error(balanceResult.error || "Could not read demo balance");
+      setDemoStatus("connected"); setDemoBalance(Number(balanceResult.balance)); setDemoCurrency(balanceResult.currency || result.currency || "USD");
+    } catch (connectionError) { setDemoStatus("error"); setDemoError(connectionError instanceof Error ? connectionError.message : "Demo connection failed"); }
+  };
+
   const startPaper = () => {
     if (status !== "live" || ticks.length < 20) return;
     const latestSeq = ticks[ticks.length - 1]?.seq ?? 0;
@@ -474,7 +491,7 @@ export default function Home() {
             <h1>Read the tape.<br /><span>Test the rules.</span></h1>
             <p className="intro-copy">A clear view of the ticks behind your demo strategy. Signals describe recent movement — they do not predict the next tick.</p>
           </div>
-          <div className="mode-note"><ShieldCheck size={17} /><div><strong>SIMULATION ONLY</strong><span>Never places a Deriv trade or accesses your account.</span></div></div>
+          <div className="mode-note"><ShieldCheck size={17} /><div><strong>DEMO BOT · OFF</strong><span>{demoStatus === "connected" ? `Demo balance: ${demoCurrency} ${demoBalance?.toFixed(2) ?? "—"}` : "Connect your Deriv demo account to view balance."}</span><button type="button" className="button-quiet demo-connect-button" onClick={() => void connectDemo()} disabled={demoStatus === "connecting"}>{demoStatus === "connected" ? "Refresh balance" : demoStatus === "connecting" ? "Connecting…" : "Connect demo"}</button>{demoError && <small className="demo-error">{demoError}</small>}</div></div>
         </section>
 
         <section className="market-toolbar panel">

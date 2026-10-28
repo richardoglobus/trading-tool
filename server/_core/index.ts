@@ -12,6 +12,7 @@ import { isAllowlistedAdminEmail } from "./admin";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
+import { derivDemoConfig, getDemoBalance, getDemoConnection, listDemoAccounts } from "./derivDemo";
 
 async function startServer() {
   const app = express();
@@ -28,6 +29,35 @@ async function startServer() {
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
   app.get("/api/platform/config.js", (_req, res) => {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());
+  });
+  app.get("/api/deriv/demo/status", async (req, res) => {
+    if (!isAdminAccount(await sdk.authenticateRequest(req))) { res.status(401).json({ error: "Authentication required." }); return; }
+    try {
+      const accounts = await listDemoAccounts();
+      res.json({ connected: true, accountCount: accounts.length, config: derivDemoConfig });
+    } catch (error) {
+      console.error("[Deriv] Demo status failed", error instanceof Error ? error.message : "unknown error");
+      res.status(503).json({ connected: false, error: "Deriv demo connection is not available." });
+    }
+  });
+  app.post("/api/deriv/demo/connect", async (req, res) => {
+    if (!isAdminAccount(await sdk.authenticateRequest(req))) { res.status(401).json({ error: "Authentication required." }); return; }
+    try {
+      const connection = await getDemoConnection();
+      res.json({ connected: true, accountId: connection.accountId, currency: connection.currency, symbol: connection.symbol });
+    } catch (error) {
+      console.error("[Deriv] Demo connect failed", error instanceof Error ? error.message : "unknown error");
+      res.status(503).json({ connected: false, error: "Could not connect to the Deriv demo account." });
+    }
+  });
+  app.get("/api/deriv/demo/balance", async (req, res) => {
+    if (!isAdminAccount(await sdk.authenticateRequest(req))) { res.status(401).json({ error: "Authentication required." }); return; }
+    try {
+      res.json({ connected: true, ...(await getDemoBalance()) });
+    } catch (error) {
+      console.error("[Deriv] Demo balance failed", error instanceof Error ? error.message : "unknown error");
+      res.status(503).json({ connected: false, error: "Could not read the Deriv demo balance." });
+    }
   });
   app.post("/api/auth/login", async (req, res) => {
     const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";

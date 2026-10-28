@@ -13,4 +13,6 @@ export const ENV = {
   get supabaseUrl() { return process.env.SUPABASE_URL ?? ""; },
   get supabasePublishableKey() { return process.env.SUPABASE_PUBLISHABLE_KEY ?? ""; },
   get publicUrl() { return process.env.TICKWISE_PUBLIC_URL ?? "https://tickwise-trading-tool.onrender.com"; },
+  get derivAppId() { return process.env.DERIV_APP_ID ?? ""; },
+  get derivPat() { return process.env.DERIV_PAT ?? ""; },
 };
