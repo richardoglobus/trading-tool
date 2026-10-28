@@ -7,6 +7,9 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { isAdminAccount } from "./admin";
 import { sdk } from "./sdk";
+import { getSessionCookieOptions } from "./cookies";
+import { isAllowlistedAdminEmail } from "./admin";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { serveStatic, setupVite } from "./vite";
 
 async function startServer() {
@@ -24,6 +27,54 @@ async function startServer() {
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
   app.get("/api/platform/config.js", (_req, res) => {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());
+  });
+  app.post("/api/auth/login", async (req, res) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required." });
+      return;
+    }
+    if (!isAllowlistedAdminEmail(email)) {
+      res.status(403).json({ error: "This email is not authorized for Tickwise." });
+      return;
+    }
+    try {
+      const identity = await sdk.signInWithPassword(email, password);
+      const user = await sdk.ensureAdminUser(identity);
+      const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name || email });
+      res.cookie(COOKIE_NAME, sessionToken, { ...getSessionCookieOptions(req), maxAge: ONE_YEAR_MS });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Auth] Password login failed", error instanceof Error ? error.message : "unknown error");
+      res.status(401).json({ error: "Invalid email or password." });
+    }
+  });
+  app.post("/api/auth/signup", async (req, res) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (!email || password.length < 8) {
+      res.status(400).json({ error: "Use the authorized email and a password of at least 8 characters." });
+      return;
+    }
+    if (!isAllowlistedAdminEmail(email)) {
+      res.status(403).json({ error: "Only the configured admin email can create this account." });
+      return;
+    }
+    try {
+      const identity = await sdk.signUpWithPassword(email, password);
+      if (identity.confirmationRequired || !identity.accessToken) {
+        res.json({ success: true, confirmationRequired: true });
+        return;
+      }
+      const user = await sdk.ensureAdminUser(identity);
+      const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name || email });
+      res.cookie(COOKIE_NAME, sessionToken, { ...getSessionCookieOptions(req), maxAge: ONE_YEAR_MS });
+      res.json({ success: true, confirmationRequired: false });
+    } catch (error) {
+      console.error("[Auth] Password signup failed", error instanceof Error ? error.message : "unknown error");
+      res.status(400).json({ error: "Could not create the account. It may already exist." });
+    }
   });
   registerOAuthRoutes(app);
   // tRPC API
