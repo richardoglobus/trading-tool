@@ -76,6 +76,36 @@ async function startServer() {
       res.status(400).json({ error: "Could not create the account. It may already exist." });
     }
   });
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    if (!email || !isAllowlistedAdminEmail(email)) {
+      res.status(400).json({ error: "Enter the configured administrator email." });
+      return;
+    }
+    try {
+      const origin = `${req.protocol}://${req.get("host")}`;
+      await sdk.requestPasswordReset(email, `${origin}/reset-password`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Auth] Password reset request failed", error instanceof Error ? error.message : "unknown error");
+      res.status(400).json({ error: "Could not send the reset email. Please try again." });
+    }
+  });
+  app.post("/api/auth/reset-password", async (req, res) => {
+    const accessToken = typeof req.body?.accessToken === "string" ? req.body.accessToken : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (!accessToken || password.length < 8) {
+      res.status(400).json({ error: "Use a valid reset link and a password of at least 8 characters." });
+      return;
+    }
+    try {
+      await sdk.updatePassword(accessToken, password);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Auth] Password reset failed", error instanceof Error ? error.message : "unknown error");
+      res.status(400).json({ error: "This reset link is invalid or expired. Request a new one." });
+    }
+  });
   registerOAuthRoutes(app);
   // tRPC API
   app.use(

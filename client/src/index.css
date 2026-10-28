@@ -49,6 +49,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .auth-security-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 19px; padding: 12px; border: 1px solid #2a382d; border-radius: 6px; background: rgba(28, 42, 31, .45); color: #a3b18e; font-size: 10px; line-height: 1.6; }
 .auth-security-note svg { flex: none; margin-top: 1px; color: var(--lime); }
 .auth-warning { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #66423b; border-radius: 5px; background: rgba(79, 43, 38, .35); color: #e6a49a; font-size: 10px; line-height: 1.55; }
+.auth-success { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #405d38; border-radius: 5px; background: rgba(53, 87, 43, .3); color: #b7f36b; font-size: 10px; line-height: 1.55; }
+.auth-link { display: block; margin-top: 13px; text-align: center; text-decoration: none; }
 .auth-footnote { margin: 17px 0 0; color: #6f7d73; font-size: 9px; line-height: 1.6; }
 .auth-loading { display: flex; align-items: center; gap: 10px; color: #b6c0b8; font: 11px var(--mono); }
 .auth-signout { display: inline-flex; align-items: center; gap: 8px; }

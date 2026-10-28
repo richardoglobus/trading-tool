@@ -85,6 +85,17 @@ class SDKServer {
     };
   }
 
+  async requestPasswordReset(email: string, redirectTo: string) {
+    await this.supabaseClient.post("/auth/v1/recover", { email, redirect_to: redirectTo });
+  }
+
+  async updatePassword(accessToken: string, password: string) {
+    const { data } = await this.supabaseClient.put<SupabaseUser>("/auth/v1/user", { password }, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!data?.id) throw new Error("Password update failed");
+  }
+
   async createSessionToken(openId: string, options: { expiresInMs?: number; name?: string } = {}) {
     return this.signSession(
       { openId, appId: ENV.appId || "tickwise", name: options.name || "" },
