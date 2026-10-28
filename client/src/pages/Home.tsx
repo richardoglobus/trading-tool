@@ -308,7 +308,6 @@ export default function Home() {
   const [windowSize, setWindowSize] = useState(100);
   const { status, ticks, error, feedSymbol } = useDerivFeed(symbol);
   const [paper, setPaper] = useState<PaperState>(INITIAL_PAPER);
-  const [balanceInput, setBalanceInput] = useState("");
   const [riskPercent, setRiskPercent] = useState(1);
   const { user, logout } = useAuth();
   const [demoStatus, setDemoStatus] = useState<"disconnected" | "connecting" | "connected" | "error">("disconnected");
@@ -336,9 +335,8 @@ export default function Home() {
   const breakEven = 100 / (1 + paper.payout / 100);
   const potentialWin = paper.stake * (paper.payout / 100);
   const maxLosingTrades = paper.stake > 0 ? Math.floor(paper.stopLoss / paper.stake) : 0;
-  const enteredBalance = Number(balanceInput);
-  const riskBudget = balanceInput.trim() && Number.isFinite(enteredBalance) && enteredBalance > 0 && enteredBalance <= 100000000
-    ? enteredBalance * riskPercent / 100
+  const riskBudget = demoBalance !== null && Number.isFinite(demoBalance) && demoBalance > 0 && demoBalance <= 100000000
+    ? demoBalance * riskPercent / 100
     : null;
   const canApplyRiskBudget = riskBudget !== null && riskBudget >= 0.35 && !paper.running;
 
@@ -564,7 +562,7 @@ export default function Home() {
           </article>
 
           <article className="panel stats-panel paper-panel">
-            <div className="panel-heading"><div><span className="panel-kicker">DEMO STRATEGY LAB</span><h2>SMA paper run</h2></div><span className="sim-tag"><span />FAKE MONEY</span></div>
+            <div className="panel-heading"><div><span className="panel-kicker">DEMO STRATEGY LAB</span><h2>SMA paper run</h2></div><span className="sim-tag"><span />NO ORDER SENT</span></div>
             <p className="paper-intro">Mirrors the 5/20 Rise/Fall rule using live ticks. One simulated position at a time.</p>
             <div className="paper-controls">
               <label>Stake <span><span>$</span><input aria-label="Hypothetical stake in dollars" type="number" min="0.35" max="10000" step="0.25" value={paper.stake} disabled={paper.running} onChange={(event) => updatePaper("stake", Number(event.target.value))} /></span></label>
@@ -592,10 +590,10 @@ export default function Home() {
           <div className="risk-title"><span className="risk-icon"><BarChart3 size={17} /></span><div><span className="panel-kicker">POSITION MATH</span><h2>Risk calculator</h2></div></div>
           <div className="risk-subtitle">Hypothetical values based on your paper-run settings.</div>
           <div className="balance-sizing">
-            <div className="balance-sizing-head"><ShieldCheck size={14} /><span>BALANCE-BASED PAPER SIZING · LOCAL ONLY</span></div>
+            <div className="balance-sizing-head"><ShieldCheck size={14} /><span>DERIV DEMO BALANCE · READ ONLY</span></div>
             <div className="balance-sizing-controls">
-              <label htmlFor="usd-balance">USD balance
-                <span className="balance-input-wrap"><span>$</span><input id="usd-balance" type="number" min="0.01" max="100000000" step="0.01" autoComplete="off" value={balanceInput} onChange={(event) => setBalanceInput(event.target.value)} placeholder="Enter amount" /></span>
+              <label>Demo balance
+                <span className="balance-input-wrap"><span>{demoCurrency}</span><strong>{demoBalance === null ? "Connect demo" : demoBalance.toFixed(2)}</strong></span>
               </label>
               <label htmlFor="risk-percent">Example risk percent
                 <span className="balance-input-wrap"><input id="risk-percent" type="number" min="0.1" max="100" step="0.1" value={riskPercent} onChange={(event) => { const value = Number(event.target.value); setRiskPercent(Number.isFinite(value) ? Math.min(100, Math.max(0.1, value)) : 0.1); }} /><span>%</span></span>
@@ -603,7 +601,7 @@ export default function Home() {
               <div className="balance-sizing-result"><span>EXAMPLE FULL-STAKE LOSS BUDGET</span><strong>{riskBudget === null ? "—" : `$${riskBudget.toFixed(2)}`}</strong></div>
               <button type="button" className="button-primary balance-sizing-button" disabled={!canApplyRiskBudget} onClick={applyBalanceSizing}>Use as paper stake</button>
             </div>
-            <p className="balance-sizing-note">{riskBudget === null ? "Enter a balance to calculate an illustrative amount." : riskBudget < 0.35 ? "Below the paper tool’s $0.35 minimum; no stake will be applied." : riskBudget > 10000 ? "The paper simulator caps the applied stake at $10,000." : "The default 1% is a demonstration value, not a recommendation."} The balance and percentage stay in this browser tab; they are not sent to the server or saved. This does not predict the next tick or choose Rise/Fall.</p>
+            <p className="balance-sizing-note">{riskBudget === null ? "Connect the Deriv demo account to read the current balance." : riskBudget < 0.35 ? "Below the paper tool’s $0.35 minimum; no stake will be applied." : riskBudget > 10000 ? "The paper simulator caps the applied stake at $10,000." : "The default 1% is a demonstration value, not a recommendation."} The balance is read from Deriv and is not editable here. This does not predict the next tick or choose Rise/Fall.</p>
           </div>
           <div className="risk-metrics">
             <div><span>WIN PROFIT IF RIGHT</span><strong className="result-green">+${potentialWin.toFixed(2)}</strong><small>at {paper.payout}% net payout</small></div>
