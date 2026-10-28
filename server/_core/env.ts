@@ -12,4 +12,5 @@ export const ENV = {
   get forgeApiKey() { return process.env.MANUS_API_KEY ?? ""; },
   get supabaseUrl() { return process.env.SUPABASE_URL ?? ""; },
   get supabasePublishableKey() { return process.env.SUPABASE_PUBLISHABLE_KEY ?? ""; },
+  get publicUrl() { return process.env.TICKWISE_PUBLIC_URL ?? "https://tickwise-trading-tool.onrender.com"; },
 };

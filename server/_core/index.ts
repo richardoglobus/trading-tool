@@ -11,6 +11,7 @@ import { getSessionCookieOptions } from "./cookies";
 import { isAllowlistedAdminEmail } from "./admin";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { serveStatic, setupVite } from "./vite";
+import { ENV } from "./env";
 
 async function startServer() {
   const app = express();
@@ -83,8 +84,7 @@ async function startServer() {
       return;
     }
     try {
-      const origin = `${req.protocol}://${req.get("host")}`;
-      await sdk.requestPasswordReset(email, `${origin}/reset-password`);
+      await sdk.requestPasswordReset(email, `${ENV.publicUrl}/reset-password`);
       res.json({ success: true });
     } catch (error) {
       console.error("[Auth] Password reset request failed", error instanceof Error ? error.message : "unknown error");
